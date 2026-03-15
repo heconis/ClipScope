@@ -1,0 +1,5 @@
+APP_NAME = "ClipScope"
+APP_VERSION = "0.1.0"
+DEFAULT_DATABASE_FILENAME = "clipscope.db"
+DEFAULT_PLAYER_PATH = "/obs-player"
+DEFAULT_TWITCH_CLIENT_ID = "tjsgrpvb9itt6wnfbybser23ga9aku"

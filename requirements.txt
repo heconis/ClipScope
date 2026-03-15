@@ -1,0 +1,4 @@
+nicegui>=3.8,<4.0
+httpx>=0.28,<0.29
+pywebview>=6.1,<7.0
+pyinstaller>=6.0,<7.0

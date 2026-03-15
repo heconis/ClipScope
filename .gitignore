@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+clipscope.db
+build/
+dist/
+*.spec

@@ -1,0 +1,32 @@
+[project]
+name = "clipscope"
+version = "0.1.0"
+description = "Twitch clip monitoring and OBS playback helper."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "nicegui>=3.8,<4.0",
+  "httpx>=0.28,<0.29",
+  "pywebview>=6.1,<7.0",
+]
+
+[project.scripts]
+clipscope = "app.main:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+  "app",
+  "app.application",
+  "app.clips",
+  "app.config",
+  "app.gui",
+  "app.gui.components",
+  "app.models",
+  "app.player",
+  "app.storage",
+  "app.twitch",
+]
