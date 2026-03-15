@@ -41,9 +41,14 @@ $env:TWITCH_CLIENT_ID = "your_client_id"
 python -m app.main --run-ui
 ```
 
+データベースの保存先:
+
+- 既定: `%APPDATA%\ClipScope\clipscope.db`
+- 上書き: `CLIPSCOPE_DB_PATH` 環境変数
+
 ## 配布ビルド (Windows)
 
-PyInstaller を使って onedir 形式でビルドします。
+PyInstaller を使って onefile 形式でビルドします。
 
 ```powershell
 .\tools\release\build_windows.ps1
@@ -51,7 +56,7 @@ PyInstaller を使って onedir 形式でビルドします。
 
 出力先:
 
-- `dist/ClipScope/ClipScope.exe`
+- `dist/ClipScope.exe`
 
 配布用 ZIP を作成する場合:
 

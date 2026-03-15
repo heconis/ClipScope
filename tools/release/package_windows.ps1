@@ -7,9 +7,9 @@ $ErrorActionPreference = "Stop"
 
 Set-Location -LiteralPath (Join-Path $PSScriptRoot "..\..")
 
-$distDir = "dist\ClipScope"
-if (-not (Test-Path $distDir)) {
-    throw "Missing build output at $distDir. Run tools/release/build_windows.ps1 first."
+$distExe = "dist\ClipScope.exe"
+if (-not (Test-Path $distExe)) {
+    throw "Missing build output at $distExe. Run tools/release/build_windows.ps1 first."
 }
 
 $releaseRoot = "release"
@@ -28,8 +28,7 @@ if (-not (Test-Path $releaseRoot)) {
 
 New-Item -ItemType Directory -Path $packageRoot | Out-Null
 
-$runtimeTarget = Join-Path $packageRoot "ClipScope"
-Copy-Item $distDir $runtimeTarget -Recurse -Force
+Copy-Item $distExe (Join-Path $packageRoot "ClipScope.exe") -Force
 Copy-Item "README.md" (Join-Path $packageRoot "README.md") -Force
 Copy-Item "LICENSE" (Join-Path $packageRoot "LICENSE") -Force
 

@@ -27,6 +27,9 @@ if (Test-Path ".\build") {
 if (Test-Path ".\dist\ClipScope") {
     Remove-Item ".\dist\ClipScope" -Recurse -Force
 }
+if (Test-Path ".\dist\ClipScope.exe") {
+    Remove-Item ".\dist\ClipScope.exe" -Force
+}
 
 & $python -m PyInstaller `
     --noconfirm `
@@ -34,4 +37,4 @@ if (Test-Path ".\dist\ClipScope") {
     $specPath
 
 Write-Host ""
-Write-Host "Build finished: dist\ClipScope\ClipScope.exe"
+Write-Host "Build finished: dist\ClipScope.exe"
