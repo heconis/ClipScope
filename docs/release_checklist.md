@@ -13,8 +13,8 @@
 - [ ] `.venv` を有効化
 - [ ] `.\tools\release\build_windows.ps1` を実行
 - [ ] `dist/ClipScope.exe` が生成される
-- [ ] `.\tools\release\package_windows.ps1 -Version 0.1.0` を実行
-- [ ] `release/ClipScope-v0.1.0-windows-x64.zip` が生成される
+- [ ] `.\tools\release\package_windows.ps1 -Version 0.1.1` を実行
+- [ ] `release/ClipScope-v0.1.1-windows-x64.zip` が生成される
 
 ## 3. 配布物確認
 

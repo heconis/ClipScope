@@ -5,7 +5,7 @@ a = Analysis(
     ['run_clipscope.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('assets\\sound\\notify.wav', 'assets\\sound')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

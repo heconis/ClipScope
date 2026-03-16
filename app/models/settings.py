@@ -10,6 +10,8 @@ class AppSettings:
     local_server_port: int
     max_clip_count: int
     retention_days: int
+    always_on_top: bool = True
+    play_sound_on_new_clip: bool = True
     window_width: int = 1440
     window_height: int = 900
 

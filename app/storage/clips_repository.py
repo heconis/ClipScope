@@ -35,6 +35,15 @@ class ClipsRepository:
             ).fetchall()
         return [self._row_to_clip(row) for row in rows]
 
+    def get_latest_created_at(self) -> datetime | None:
+        with self.database.connect() as connection:
+            row = connection.execute(
+                "SELECT MAX(created_at) AS latest_created_at FROM clips"
+            ).fetchone()
+        if row is None or row["latest_created_at"] is None:
+            return None
+        return datetime.fromisoformat(row["latest_created_at"])
+
     def upsert_many(self, clips: list[ClipItem]) -> None:
         if not clips:
             return

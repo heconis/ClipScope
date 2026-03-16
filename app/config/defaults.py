@@ -8,6 +8,8 @@ DEFAULT_SETTINGS = AppSettings(
     local_server_port=8787,
     max_clip_count=100,
     retention_days=30,
+    always_on_top=True,
+    play_sound_on_new_clip=True,
     window_width=1440,
     window_height=900,
 )

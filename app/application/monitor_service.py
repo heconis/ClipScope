@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import threading
-import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from app.clips.clip_repository_service import ClipRepositoryService
 from app.models.auth import AuthState
@@ -21,6 +20,8 @@ class MonitorStatus:
 
 
 class MonitorService:
+    _STARTED_AT_SAFETY_MARGIN_SECONDS = 2
+
     def __init__(
         self,
         clips_service: TwitchClipsService,
@@ -65,9 +66,7 @@ class MonitorService:
             self._status.last_error = "Missing access token."
             return []
         try:
-            window_started_at = self._status.monitoring_started_at or self._status.last_success_at
-            if window_started_at is None:
-                window_started_at = self._status.last_run_at
+            window_started_at = self._resolve_started_at()
             clips = self.clips_service.get_clips_for_broadcaster(
                 access_token=auth_state.access_token,
                 broadcaster_id=broadcaster_id,
@@ -88,3 +87,16 @@ class MonitorService:
             if self._stop_event.wait(self.polling_interval_seconds):
                 break
         self._status.is_running = False
+
+    def _resolve_started_at(self) -> datetime:
+        base_started_at = self._status.monitoring_started_at or self._status.last_success_at or self._status.last_run_at
+        if base_started_at is None:
+            base_started_at = datetime.now(timezone.utc)
+
+        latest_created_at = self.clip_repository_service.latest_clip_created_at()
+        if latest_created_at is None:
+            return base_started_at
+
+        safety_margin = timedelta(seconds=self._STARTED_AT_SAFETY_MARGIN_SECONDS)
+        candidate = latest_created_at - safety_margin
+        return max(base_started_at, candidate)

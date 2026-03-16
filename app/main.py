@@ -110,9 +110,11 @@ def run_ui(controller: AppController) -> None:
 
     _install_shutdown_noise_filter()
     register_ui(controller)
+    settings = controller.get_settings()
     app.native.window_args.update(
         resizable=False,
         min_size=(360, 640),
+        on_top=settings.always_on_top,
     )
     ui_port = find_available_port(8080)
     try:

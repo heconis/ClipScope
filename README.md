@@ -38,6 +38,7 @@ python -m app.main --run-ui
 
 ```powershell
 $env:TWITCH_CLIENT_ID = "your_client_id"
+$env:CLIPSCOPE_NOTIFY_SOUND_PATH = "C:\path\to\notify.wav"
 python -m app.main --run-ui
 ```
 
@@ -45,6 +46,14 @@ python -m app.main --run-ui
 
 - 既定: `%APPDATA%\ClipScope\clipscope.db`
 - 上書き: `CLIPSCOPE_DB_PATH` 環境変数
+
+通知音ファイル:
+
+- 推奨: `wav`
+- 既定探索先:
+  - `%APPDATA%\ClipScope\notify.wav`
+  - 実行ファイルと同じフォルダの `notify.wav`
+  - 開発環境の `assets/sound/notify.wav`
 
 ## 配布ビルド (Windows)
 
@@ -61,12 +70,12 @@ PyInstaller を使って onefile 形式でビルドします。
 配布用 ZIP を作成する場合:
 
 ```powershell
-.\tools\release\package_windows.ps1 -Version 0.1.0
+.\tools\release\package_windows.ps1 -Version 0.1.1
 ```
 
 出力先:
 
-- `release/ClipScope-v0.1.0-windows-x64.zip`
+- `release/ClipScope-v0.1.1-windows-x64.zip`
 
 ## Twitch Developer 設定 (配布時の案内用)
 

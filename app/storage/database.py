@@ -31,6 +31,8 @@ class Database:
                     local_server_port INTEGER NOT NULL,
                     max_clip_count INTEGER NOT NULL,
                     retention_days INTEGER NOT NULL,
+                    always_on_top INTEGER NOT NULL DEFAULT 1,
+                    play_sound_on_new_clip INTEGER NOT NULL DEFAULT 1,
                     window_width INTEGER NOT NULL,
                     window_height INTEGER NOT NULL
                 );
@@ -73,6 +75,18 @@ class Database:
             if "scopes" not in columns:
                 connection.execute(
                     "ALTER TABLE auth_state ADD COLUMN scopes TEXT NOT NULL DEFAULT '[]'"
+                )
+            settings_columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(settings)").fetchall()
+            }
+            if "always_on_top" not in settings_columns:
+                connection.execute(
+                    "ALTER TABLE settings ADD COLUMN always_on_top INTEGER NOT NULL DEFAULT 1"
+                )
+            if "play_sound_on_new_clip" not in settings_columns:
+                connection.execute(
+                    "ALTER TABLE settings ADD COLUMN play_sound_on_new_clip INTEGER NOT NULL DEFAULT 1"
                 )
             clip_columns = {
                 row["name"]

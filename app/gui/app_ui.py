@@ -44,6 +44,7 @@ def register_ui(controller: AppController) -> None:
 
         auth_state = controller.get_auth_state()
         auto_monitor_bootstrap = {"done": False}
+        auto_window_flag_bootstrap = {"done": False}
 
         with ui.column().classes("w-screen h-screen gap-0"):
             with ui.row().classes("w-full items-center justify-between pl-4 pr-1 py-3 bg-primary text-white shrink-0"):
@@ -63,12 +64,12 @@ def register_ui(controller: AppController) -> None:
                 def open_main_tab() -> None:
                     tabs.value = main_tab
 
-                with ui.tab_panels(tabs, value=tabs.value).classes("w-full bg-transparent"):
-                    with ui.tab_panel(setup_tab):
+                with ui.tab_panels(tabs, value=tabs.value).classes("w-full h-full bg-transparent"):
+                    with ui.tab_panel(setup_tab).classes("h-full"):
                         render_setup_panel(controller, open_main_tab=open_main_tab)
-                    with ui.tab_panel(main_tab):
+                    with ui.tab_panel(main_tab).classes("h-full"):
                         render_main_panel(controller)
-                    with ui.tab_panel(settings_tab):
+                    with ui.tab_panel(settings_tab).classes("h-full"):
                         render_settings_panel(controller)
 
         def ensure_monitor_on_ui_ready() -> None:
@@ -80,3 +81,18 @@ def register_ui(controller: AppController) -> None:
                 controller.ensure_monitoring_for_authenticated()
 
         ui.timer(1.0, ensure_monitor_on_ui_ready)
+
+        def ensure_window_flags_on_ui_ready() -> None:
+            if auto_window_flag_bootstrap["done"]:
+                return
+            if not app.native.main_window:
+                return
+            try:
+                app.native.main_window.set_always_on_top(
+                    bool(controller.get_settings().always_on_top)
+                )
+            except Exception:
+                return
+            auto_window_flag_bootstrap["done"] = True
+
+        ui.timer(1.0, ensure_window_flags_on_ui_ready)

@@ -20,6 +20,9 @@ class ClipRepositoryService:
     def list_clips(self) -> list[ClipItem]:
         return self.repository.list_all()
 
+    def latest_clip_created_at(self) -> datetime | None:
+        return self.repository.get_latest_created_at()
+
     def merge_clips(self, clips: list[ClipItem]) -> list[ClipItem]:
         deduped = self._dedupe_by_clip_id(clips)
         sorted_clips = sorted(deduped.values(), key=lambda clip: clip.created_at, reverse=True)
