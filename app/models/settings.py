@@ -12,6 +12,7 @@ class AppSettings:
     retention_days: int
     always_on_top: bool = True
     play_sound_on_new_clip: bool = True
+    theme_mode: str = "light"
     window_width: int = 1440
     window_height: int = 900
 

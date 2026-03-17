@@ -18,7 +18,9 @@ def register_ui(controller: AppController) -> None:
 
     @ui.page("/")
     def _index_page() -> None:
+        settings = controller.get_settings()
         ui.colors(primary="#2563eb", secondary="#0f172a", accent="#f59e0b")
+        dark_mode = ui.dark_mode(value=(settings.theme_mode == "dark"))
         ui.add_css(
             """
             html, body, #q-app {
@@ -39,15 +41,72 @@ def register_ui(controller: AppController) -> None:
               margin: 0 !important;
               padding: 0 !important;
             }
+            .body--dark .bg-white {
+              background-color: #1d1d1d !important;
+            }
+            .body--dark .text-gray-500,
+            .body--dark .text-gray-600,
+            .body--dark .text-gray-700 {
+              color: #cbd5e1 !important;
+            }
+            .body--dark .border {
+              border-color: #475569 !important;
+            }
+            .body--dark .q-card {
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55) !important;
+            }
+            .clip-card-default.q-card {
+              background-color: #ffffff;
+              border-color: #e5e7eb;
+            }
+            .body--dark .clip-card.q-card {
+              background-color: #1d1d1d !important;
+              border-color: #475569 !important;
+            }
+            .body--dark .clip-card.clip-card-selected.q-card {
+              background-color: #0f172a !important;
+              border-color: #3b82f6 !important;
+            }
+            .main-monitor-footer {
+              background-color: #ffffff;
+              border-color: #e5e7eb;
+            }
+            .body--dark .main-monitor-footer {
+              background-color: inherit !important;
+              border-color: #374151 !important;
+            }
+            .settings-section {
+              background-color: #ffffff;
+              border-color: #e5e7eb;
+            }
+            .settings-card {
+              background-color: #ffffff;
+              border-color: #e5e7eb;
+            }
+            .settings-footer {
+              background-color: #ffffff;
+              border-color: #e5e7eb;
+            }
+            .body--dark .settings-section {
+              background-color: #1d1d1d !important;
+              border-color: #475569 !important;
+            }
+            .body--dark .settings-card {
+              background-color: #1d1d1d !important;
+              border-color: #475569 !important;
+            }
+            .body--dark .settings-footer {
+              background-color: inherit !important;
+              border-color: #374151 !important;
+            }
             """
         )
 
         auth_state = controller.get_auth_state()
-        auto_monitor_bootstrap = {"done": False}
         auto_window_flag_bootstrap = {"done": False}
 
         with ui.column().classes("w-screen h-screen gap-0"):
-            with ui.row().classes("w-full items-center justify-between pl-4 pr-1 py-3 bg-primary text-white shrink-0"):
+            with ui.row().classes("w-full items-center justify-between pl-4 pr-1 py-0 bg-[#468ace] text-white shrink-0"):
                 ui.label("ClipScope").classes("text-xl font-bold")
                 ui.button(icon="close", on_click=app.shutdown).props(
                     "flat round dense color=white size=lg"
@@ -64,23 +123,19 @@ def register_ui(controller: AppController) -> None:
                 def open_main_tab() -> None:
                     tabs.value = main_tab
 
+                def apply_theme_mode(mode: str) -> None:
+                    if mode == "dark":
+                        dark_mode.enable()
+                    else:
+                        dark_mode.disable()
+
                 with ui.tab_panels(tabs, value=tabs.value).classes("w-full h-full bg-transparent"):
                     with ui.tab_panel(setup_tab).classes("h-full"):
                         render_setup_panel(controller, open_main_tab=open_main_tab)
                     with ui.tab_panel(main_tab).classes("h-full"):
                         render_main_panel(controller)
                     with ui.tab_panel(settings_tab).classes("h-full"):
-                        render_settings_panel(controller)
-
-        def ensure_monitor_on_ui_ready() -> None:
-            if auto_monitor_bootstrap["done"]:
-                return
-            auto_monitor_bootstrap["done"] = True
-            state = controller.get_auth_state()
-            if state.is_authenticated:
-                controller.ensure_monitoring_for_authenticated()
-
-        ui.timer(1.0, ensure_monitor_on_ui_ready)
+                        render_settings_panel(controller, on_theme_change=apply_theme_mode)
 
         def ensure_window_flags_on_ui_ready() -> None:
             if auto_window_flag_bootstrap["done"]:

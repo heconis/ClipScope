@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import threading
+
 from app.application.monitor_service import MonitorService, MonitorStatus
 from app.application.settings_service import SettingsService
 from app.application.auth_service import AuthService, AuthSession
@@ -36,12 +38,35 @@ class AppController:
         self.database = database
         self.settings = self.settings_service.load()
         self.auth_state = self.auth_repository.load() or AuthState()
+        self._startup_auth_validation_thread: threading.Thread | None = None
 
     def bootstrap(self) -> None:
         self.settings = self.settings_service.load()
+        self.auth_state = self.auth_service.get_auth_state()
+        self._start_startup_auth_validation()
         self.monitor_service.configure(self.settings.polling_interval_seconds)
         self.player_server.start()
-        self.ensure_monitoring_for_authenticated()
+
+    def _start_startup_auth_validation(self) -> None:
+        current_auth = self.auth_state
+        if not current_auth.access_token:
+            return
+
+        def _validate() -> None:
+            try:
+                # Validate once at startup; invalid tokens are downgraded
+                # to unauthenticated by AuthService.
+                self.auth_state = self.auth_service.validate_current_authentication()
+            except Exception:
+                # Keep startup resilient on transient network errors.
+                self.auth_state = current_auth
+
+        self._startup_auth_validation_thread = threading.Thread(
+            target=_validate,
+            name="startup-auth-validation",
+            daemon=True,
+        )
+        self._startup_auth_validation_thread.start()
 
     def shutdown(self) -> None:
         self.monitor_service.stop()
@@ -85,7 +110,7 @@ class AppController:
     def require_broadcaster_id(self) -> str:
         auth_state = self.get_auth_state()
         if not auth_state.is_authenticated or not auth_state.user_id:
-            raise RuntimeError("Authenticate with Twitch first.")
+            raise RuntimeError("最初にTwitch認証を完了してください。")
         return auth_state.user_id
 
     def get_pending_auth_session(self) -> AuthSession | None:

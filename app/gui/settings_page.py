@@ -1,28 +1,58 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from nicegui import app, ui
 
 from app.application.app_controller import AppController
 
 
-def render_settings_panel(controller: AppController) -> None:
+def render_settings_panel(
+    controller: AppController,
+    on_theme_change: Callable[[str], None] | None = None,
+) -> None:
     settings = controller.get_settings().copy()
+    valid_themes = {"light", "dark"}
+    settings.theme_mode = str(settings.theme_mode or "light")
+    if settings.theme_mode not in valid_themes:
+        settings.theme_mode = "light"
 
-    with ui.column().classes("w-full h-full gap-0"):
-        with ui.column().classes("w-full flex-1 overflow-y-auto p-4 gap-3"):
-            with ui.expansion("一般", value=True).classes("w-full border rounded bg-white"):
+    with ui.column().classes("settings-root w-full h-full gap-0"):
+        with ui.column().classes("settings-scroll w-full flex-1 overflow-y-auto px-4 pt-0 pb-4 gap-3"):
+            with ui.expansion("一般", value=True).classes("settings-section w-full border rounded"):
                 with ui.column().classes("w-full p-3 gap-2"):
-                    with ui.card().classes("w-full px-3 py-2"):
+                    with ui.card().classes("settings-card w-full px-3 py-2"):
                         with ui.row().classes("w-full items-center justify-between"):
                             ui.label("常に最前面に表示").classes("text-sm font-medium leading-tight")
                             always_on_top = ui.checkbox(value=settings.always_on_top).props("dense")
 
-                    with ui.card().classes("w-full px-3 py-2"):
+                    with ui.card().classes("settings-card w-full px-3 py-2"):
                         with ui.row().classes("w-full items-center justify-between"):
                             ui.label("通知音を再生").classes("text-sm font-medium leading-tight")
                             play_sound = ui.checkbox(value=settings.play_sound_on_new_clip).props("dense")
 
-            with ui.expansion("詳細", value=False).classes("w-full border rounded bg-white"):
+                    with ui.card().classes("settings-card w-full px-3 py-2"):
+                        with ui.row().classes("w-full items-center justify-between"):
+                            ui.label("テーマ").classes("text-sm font-medium leading-tight")
+                            theme_mode = (
+                                ui.select(
+                                    options={"light": "ライト", "dark": "ダーク"},
+                                    value=settings.theme_mode,
+                                )
+                                .props("dense outlined")
+                                .classes("w-28")
+                            )
+
+                            def on_theme_preview() -> None:
+                                selected = str(theme_mode.value or "light")
+                                if selected not in valid_themes:
+                                    selected = "light"
+                                settings.theme_mode = selected
+                                apply_theme_mode()
+
+                            theme_mode.on("update:model-value", lambda _=None: on_theme_preview())
+
+            with ui.expansion("詳細", value=False).classes("settings-section w-full border rounded"):
                 with ui.column().classes("w-full p-3 gap-3"):
                     def render_number_row(
                         label: str,
@@ -31,7 +61,7 @@ def render_settings_panel(controller: AppController) -> None:
                         minimum: int,
                         maximum: int,
                     ) -> ui.number:
-                        with ui.card().classes("w-full px-3 py-2"):
+                        with ui.card().classes("settings-card w-full px-3 py-2"):
                             ui.label(label).classes("text-sm font-medium leading-tight")
                             ui.label(hint).classes("text-[11px] text-gray-600 leading-tight")
                             field = (
@@ -42,15 +72,15 @@ def render_settings_panel(controller: AppController) -> None:
                         return field
 
                     clip_limit = render_number_row(
-                        "保持最大クリップ件数",
+                        "クリップ最大保持件数",
                         "保持するクリップの上限件数です。（1〜1000件）",
                         settings.max_clip_count,
                         1,
                         1000,
                     )
                     retention = render_number_row(
-                        "保持日数",
-                        "この日数を超えると除外されます。（1〜365日）",
+                        "クリップ保持日数",
+                        "この日数を超えると古いクリップを削除します。（1〜365日）",
                         settings.retention_days,
                         1,
                         365,
@@ -75,16 +105,24 @@ def render_settings_panel(controller: AppController) -> None:
             if app.native.main_window:
                 app.native.main_window.set_always_on_top(bool(settings.always_on_top))
 
+        def apply_theme_mode() -> None:
+            if on_theme_change:
+                on_theme_change(settings.theme_mode)
+
         def save_settings() -> None:
             defaults = controller.get_default_settings()
             settings.always_on_top = bool(always_on_top.value)
             settings.play_sound_on_new_clip = bool(play_sound.value)
+            settings.theme_mode = str(theme_mode.value or "light")
+            if settings.theme_mode not in valid_themes:
+                settings.theme_mode = "light"
             settings.polling_interval_seconds = int(float(polling.value or defaults.polling_interval_seconds))
             settings.local_server_port = int(float(port.value or defaults.local_server_port))
             settings.max_clip_count = int(float(clip_limit.value or defaults.max_clip_count))
             settings.retention_days = int(float(retention.value or defaults.retention_days))
             controller.save_settings(settings.copy())
             apply_window_flags()
+            apply_theme_mode()
             ui.notify("設定を保存しました。", color="primary")
 
         def reset_settings() -> None:
@@ -101,13 +139,18 @@ def render_settings_panel(controller: AppController) -> None:
                         settings.retention_days = reset.retention_days
                         settings.always_on_top = reset.always_on_top
                         settings.play_sound_on_new_clip = reset.play_sound_on_new_clip
+                        settings.theme_mode = str(reset.theme_mode or "light")
+                        if settings.theme_mode not in valid_themes:
+                            settings.theme_mode = "light"
                         polling.value = reset.polling_interval_seconds
                         port.value = reset.local_server_port
                         clip_limit.value = reset.max_clip_count
                         retention.value = reset.retention_days
                         always_on_top.value = reset.always_on_top
                         play_sound.value = reset.play_sound_on_new_clip
+                        theme_mode.value = settings.theme_mode
                         apply_window_flags()
+                        apply_theme_mode()
                         dialog.close()
                         ui.notify("設定を初期値に戻しました。", color="primary")
 
@@ -115,6 +158,6 @@ def render_settings_panel(controller: AppController) -> None:
 
             dialog.open()
 
-        with ui.row().classes("w-full shrink-0 p-3 gap-2 border-t bg-white"):
+        with ui.row().classes("settings-footer w-full shrink-0 p-3 gap-2 border-t"):
             ui.button("保存", on_click=save_settings).props("color=primary").classes("w-full")
-            ui.button("すべて初期化", on_click=reset_settings).props("outline color=negative").classes("w-full")
+            ui.button("すべて初期化", on_click=reset_settings).props("color=negative").classes("w-full")

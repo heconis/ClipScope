@@ -33,7 +33,7 @@ def render_setup_panel(
         session = controller.get_pending_auth_session()
         player_url = controller.get_player_url()
 
-        with ui.column().classes("w-full p-4 gap-4"):
+        with ui.column().classes("w-full px-4 pt-0 pb-4 gap-4"):
             ui.label(
                 "最初にTwitch認証を完了してください。"
             ).classes("text-sm text-gray-700")

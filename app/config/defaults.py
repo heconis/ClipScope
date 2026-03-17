@@ -10,6 +10,7 @@ DEFAULT_SETTINGS = AppSettings(
     retention_days=30,
     always_on_top=True,
     play_sound_on_new_clip=True,
+    theme_mode="light",
     window_width=1440,
     window_height=900,
 )

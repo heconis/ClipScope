@@ -16,13 +16,16 @@ class Database:
         self._migrate_legacy_db_if_needed()
 
     def connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.db_path)
+        connection = sqlite3.connect(self.db_path, timeout=1.0)
         connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA busy_timeout = 500")
         connection.execute("PRAGMA foreign_keys = ON")
         return connection
 
     def initialize(self) -> None:
         with self.connect() as connection:
+            connection.execute("PRAGMA journal_mode = WAL")
+            connection.execute("PRAGMA synchronous = NORMAL")
             connection.executescript(
                 """
                 CREATE TABLE IF NOT EXISTS settings (
@@ -33,6 +36,7 @@ class Database:
                     retention_days INTEGER NOT NULL,
                     always_on_top INTEGER NOT NULL DEFAULT 1,
                     play_sound_on_new_clip INTEGER NOT NULL DEFAULT 1,
+                    theme_mode TEXT NOT NULL DEFAULT 'light',
                     window_width INTEGER NOT NULL,
                     window_height INTEGER NOT NULL
                 );
@@ -87,6 +91,10 @@ class Database:
             if "play_sound_on_new_clip" not in settings_columns:
                 connection.execute(
                     "ALTER TABLE settings ADD COLUMN play_sound_on_new_clip INTEGER NOT NULL DEFAULT 1"
+                )
+            if "theme_mode" not in settings_columns:
+                connection.execute(
+                    "ALTER TABLE settings ADD COLUMN theme_mode TEXT NOT NULL DEFAULT 'light'"
                 )
             clip_columns = {
                 row["name"]
