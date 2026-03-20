@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "0.1.2"
+    [string]$Version = "0.1.3"
 )
 
 Set-StrictMode -Version Latest
@@ -34,7 +34,7 @@ Copy-Item "LICENSE" (Join-Path $packageRoot "LICENSE") -Force
 
 $releaseNotesSource = "docs\release_notes_v{0}.md" -f $Version
 if (-not (Test-Path $releaseNotesSource)) {
-    $releaseNotesSource = "docs\release_notes_v0.1.1.md"
+    $releaseNotesSource = "docs\release_notes_v0.1.2.md"
 }
 if (Test-Path $releaseNotesSource) {
     Copy-Item $releaseNotesSource (Join-Path $packageRoot "RELEASE_NOTES.md") -Force

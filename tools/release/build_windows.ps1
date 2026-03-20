@@ -9,11 +9,22 @@ if (-not (Test-Path $python)) {
 }
 
 & $python -m pip install --upgrade pip
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to upgrade pip."
+}
 & $python -m pip install -r requirements.txt
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to install requirements."
+}
 
 $iconPath = "assets\icon\clipscope.ico"
 if (-not (Test-Path $iconPath)) {
     throw "Missing icon file at $iconPath"
+}
+
+$splashPath = "assets\splash\clipscope_splash.png"
+if (-not (Test-Path $splashPath)) {
+    throw "Missing splash file at $splashPath"
 }
 
 $specPath = "ClipScope.spec"
@@ -35,6 +46,12 @@ if (Test-Path ".\dist\ClipScope.exe") {
     --noconfirm `
     --clean `
     $specPath
+if ($LASTEXITCODE -ne 0) {
+    throw "PyInstaller build failed."
+}
+if (-not (Test-Path ".\dist\ClipScope.exe")) {
+    throw "Build did not produce dist\\ClipScope.exe"
+}
 
 Write-Host ""
 Write-Host "Build finished: dist\ClipScope.exe"

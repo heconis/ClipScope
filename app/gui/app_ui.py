@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from nicegui import app, ui
 from starlette.responses import PlainTextResponse
 
@@ -7,6 +9,20 @@ from app.application.app_controller import AppController
 from app.gui.main_page import render_main_panel
 from app.gui.settings_page import render_settings_panel
 from app.gui.setup_page import render_setup_panel
+
+
+def _close_pyinstaller_splash() -> None:
+    if not getattr(sys, "frozen", False):
+        return
+    try:
+        import pyi_splash  # type: ignore
+    except Exception:
+        return
+    try:
+        pyi_splash.close()
+    except Exception:
+        # Ignore if already closed or unavailable in current runtime.
+        return
 
 
 def register_ui(controller: AppController) -> None:
@@ -104,6 +120,7 @@ def register_ui(controller: AppController) -> None:
 
         auth_state = controller.get_auth_state()
         auto_window_flag_bootstrap = {"done": False}
+        splash_state = {"closed": False}
 
         with ui.column().classes("w-screen h-screen gap-0"):
             with ui.row().classes("w-full items-center justify-between pl-4 pr-1 py-0 bg-[#468ace] text-white shrink-0"):
@@ -138,16 +155,18 @@ def register_ui(controller: AppController) -> None:
                         render_settings_panel(controller, on_theme_change=apply_theme_mode)
 
         def ensure_window_flags_on_ui_ready() -> None:
-            if auto_window_flag_bootstrap["done"]:
-                return
             if not app.native.main_window:
                 return
-            try:
-                app.native.main_window.set_always_on_top(
-                    bool(controller.get_settings().always_on_top)
-                )
-            except Exception:
-                return
-            auto_window_flag_bootstrap["done"] = True
+            if not auto_window_flag_bootstrap["done"]:
+                try:
+                    app.native.main_window.set_always_on_top(
+                        bool(controller.get_settings().always_on_top)
+                    )
+                except Exception:
+                    pass
+                auto_window_flag_bootstrap["done"] = True
+            if not splash_state["closed"]:
+                _close_pyinstaller_splash()
+                splash_state["closed"] = True
 
-        ui.timer(1.0, ensure_window_flags_on_ui_ready)
+        ui.timer(0.2, ensure_window_flags_on_ui_ready)

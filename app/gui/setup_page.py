@@ -15,6 +15,19 @@ def render_setup_panel(
 ) -> None:
     auto_check_state = {"in_progress": False, "last_error": None}
 
+    def start_monitoring_after_auth() -> None:
+        status = controller.get_monitor_status()
+        if status.is_running:
+            return
+        try:
+            controller.start_monitoring()
+            ui.notify("認証完了。監視を自動開始しました。", color="primary")
+        except Exception as error:
+            ui.notify(
+                f"認証は完了しましたが、監視の自動開始に失敗しました: {error}",
+                color="warning",
+            )
+
     def classify_auth_error(message: str) -> tuple[str, str]:
         lower_message = message.lower()
         if "authorization_pending" in lower_message:
@@ -116,6 +129,7 @@ def render_setup_panel(
             updated = controller.complete_authentication()
             if updated.is_authenticated:
                 ui.notify("認証が完了しました。", color="primary")
+                start_monitoring_after_auth()
                 auth_panel.refresh()
         except Exception as error:
             message = str(error)
