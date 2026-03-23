@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from app.config.constants import DEFAULT_TWITCH_CLIENT_ID
@@ -72,9 +73,31 @@ class TwitchAuthClient:
             },
         )
         resolved_scopes = self._normalize_scopes(response.get("scope"))
+        expires_at = self._resolve_expires_at(response.get("expires_in"))
         return AuthState(
             access_token=response.get("access_token"),
             refresh_token=response.get("refresh_token"),
+            access_token_expires_at=expires_at,
+            is_authenticated=bool(response.get("access_token")),
+            scopes=resolved_scopes,
+        )
+
+    def refresh_access_token(self, refresh_token: str, scopes: tuple[str, ...] = ()) -> AuthState:
+        self._ensure_client_id()
+        form_data: dict[str, str] = {
+            "client_id": self.client_id,
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+        }
+        if scopes:
+            form_data["scope"] = " ".join(scopes)
+        response = self._post_form(TOKEN_URL, form_data)
+        resolved_scopes = self._normalize_scopes(response.get("scope"))
+        expires_at = self._resolve_expires_at(response.get("expires_in"))
+        return AuthState(
+            access_token=response.get("access_token"),
+            refresh_token=response.get("refresh_token"),
+            access_token_expires_at=expires_at,
             is_authenticated=bool(response.get("access_token")),
             scopes=resolved_scopes,
         )
@@ -123,3 +146,13 @@ class TwitchAuthClient:
             return tuple(raw_scopes)
         except TypeError:
             return ()
+
+    @staticmethod
+    def _resolve_expires_at(raw_expires_in: Any) -> datetime | None:
+        try:
+            expires_in = int(raw_expires_in)
+        except (TypeError, ValueError):
+            return None
+        if expires_in <= 0:
+            return None
+        return datetime.now(timezone.utc) + timedelta(seconds=expires_in)

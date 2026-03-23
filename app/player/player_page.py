@@ -29,7 +29,7 @@ def build_player_page(clip: ClipItem | None, updated_at: str | None = None) -> s
   </style>
 </head>
 <body>
-  <div class="empty">クリップが選択されていません。</div>
+  <div class="empty"></div>
   <script>
     async function checkClipChange() {
       try {

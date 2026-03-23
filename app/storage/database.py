@@ -45,6 +45,7 @@ class Database:
                     id INTEGER PRIMARY KEY CHECK (id = 1),
                     access_token TEXT,
                     refresh_token TEXT,
+                    access_token_expires_at TEXT,
                     user_id TEXT,
                     user_login TEXT,
                     user_name TEXT,
@@ -79,6 +80,10 @@ class Database:
             if "scopes" not in columns:
                 connection.execute(
                     "ALTER TABLE auth_state ADD COLUMN scopes TEXT NOT NULL DEFAULT '[]'"
+                )
+            if "access_token_expires_at" not in columns:
+                connection.execute(
+                    "ALTER TABLE auth_state ADD COLUMN access_token_expires_at TEXT"
                 )
             settings_columns = {
                 row["name"]

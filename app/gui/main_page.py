@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import sqlite3
+import traceback
+from pathlib import Path
 
 from nicegui import ui
 
@@ -10,25 +12,6 @@ from app.gui.notification_sound import play_new_clip_sound
 
 
 def render_main_panel(controller: AppController) -> None:
-    clip_diff_state = {
-        "initialized": False,
-        "known_clip_ids": set(),
-        "suppress_next_change_notice": False,
-    }
-    auto_start_state = {"attempted": False}
-    refresh_guard = {
-        "in_progress": False,
-        "pending": False,
-    }
-    view_state = {
-        "clips": [],
-        "selected_clip_id": None,
-        "monitor_running": False,
-        "clips_render_signature": None,
-        "selected_clip_id_rendered": None,
-        "monitor_running_rendered": None,
-    }
-
     def build_clips_signature(clips) -> tuple:
         return tuple(
             (
@@ -41,6 +24,47 @@ def render_main_panel(controller: AppController) -> None:
             )
             for clip in clips
         )
+
+    try:
+        initial_clips = controller.list_clips()
+        initial_selected_clip_id = controller.get_selected_clip_id()
+        initial_monitor_running = controller.get_monitor_status().is_running
+    except Exception:
+        initial_clips = []
+        initial_selected_clip_id = None
+        initial_monitor_running = False
+
+    clip_diff_state = {
+        "initialized": True,
+        "known_clip_ids": {clip.clip_id for clip in initial_clips},
+        "suppress_next_change_notice": False,
+    }
+    auto_start_state = {"attempted": False}
+    refresh_guard = {
+        "in_progress": False,
+        "pending": False,
+    }
+    view_state = {
+        "clips": initial_clips,
+        "selected_clip_id": initial_selected_clip_id,
+        "monitor_running": initial_monitor_running,
+        "clips_render_signature": build_clips_signature(initial_clips),
+        "selected_clip_id_rendered": initial_selected_clip_id,
+        "monitor_running_rendered": initial_monitor_running,
+    }
+
+    def report_unexpected_error(context: str, error: Exception) -> None:
+        message = f"{context}: {error}"
+        try:
+            log_path = Path("clipscope_error.log")
+            with log_path.open("a", encoding="utf-8") as log_file:
+                log_file.write(f"{message}\n")
+                log_file.write(traceback.format_exc())
+                log_file.write("\n")
+        except Exception:
+            pass
+        print(f"[{context}] {error}")
+        ui.notify(message, color="negative")
 
     def apply_selected_card_style(clip_id: str | None) -> None:
         if not clip_id:
@@ -131,29 +155,16 @@ def render_main_panel(controller: AppController) -> None:
 
     def _refresh_view_impl() -> None:
         monitor_status = controller.get_monitor_status()
-        if not auto_start_state["attempted"]:
-            auto_start_state["attempted"] = True
-            auth_state = controller.get_auth_state()
-            if auth_state.is_authenticated and auth_state.user_id and not monitor_status.is_running:
-                try:
-                    controller.start_monitoring(auth_state.user_id)
-                    monitor_status = controller.get_monitor_status()
-                except Exception:
-                    pass
-
         clips = controller.list_clips()
         current_clip_ids = {clip.clip_id for clip in clips}
         suppressed = bool(clip_diff_state["suppress_next_change_notice"])
         clip_diff_state["suppress_next_change_notice"] = False
 
-        if clip_diff_state["initialized"]:
-            new_clip_count = len(current_clip_ids - clip_diff_state["known_clip_ids"])
-            if new_clip_count > 0 and not suppressed and monitor_status.is_running:
-                ui.notify(f"更新完了: {new_clip_count}件のクリップを読み込みました。", color="primary")
-                if controller.get_settings().play_sound_on_new_clip:
-                    play_new_clip_sound()
-        else:
-            clip_diff_state["initialized"] = True
+        new_clip_count = len(current_clip_ids - clip_diff_state["known_clip_ids"])
+        if new_clip_count > 0 and not suppressed and monitor_status.is_running:
+            ui.notify(f"更新完了: {new_clip_count}件のクリップを読み込みました。", color="primary")
+            if controller.get_settings().play_sound_on_new_clip:
+                play_new_clip_sound()
 
         clip_diff_state["known_clip_ids"] = current_clip_ids
         view_state["clips"] = clips
@@ -186,12 +197,25 @@ def render_main_panel(controller: AppController) -> None:
         except sqlite3.OperationalError as error:
             ui.notify(f"DBアクセスエラー: {error}", color="warning")
         except Exception as error:
-            print(f"[main_page.refresh_view] {error}")
+            report_unexpected_error("main_page.refresh_view", error)
         finally:
             refresh_guard["in_progress"] = False
             if refresh_guard["pending"]:
                 refresh_guard["pending"] = False
                 request_refresh()
+
+    def attempt_auto_start() -> None:
+        if auto_start_state["attempted"]:
+            return
+        auto_start_state["attempted"] = True
+        try:
+            auth_state = controller.get_auth_state()
+            monitor_status = controller.get_monitor_status()
+            if auth_state.is_authenticated and auth_state.user_id and not monitor_status.is_running:
+                controller.start_monitoring(auth_state.user_id)
+                request_refresh()
+        except Exception as error:
+            report_unexpected_error("main_page.attempt_auto_start", error)
 
     with ui.column().classes("w-full h-full gap-0"):
         with ui.column().classes("w-full flex-1 overflow-y-auto px-4 pt-0 pb-4 gap-4 main-scroll-area"):
@@ -201,6 +225,7 @@ def render_main_panel(controller: AppController) -> None:
             monitor_footer()
 
     request_refresh()
+    ui.timer(0.5, attempt_auto_start, once=True)
     # Polling runs in a background thread; refresh the panel periodically
     # so newly fetched clips appear without pressing Refresh.
     ui.timer(5.0, request_refresh)

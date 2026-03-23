@@ -49,14 +49,16 @@ class AppController:
 
     def _start_startup_auth_validation(self) -> None:
         current_auth = self.auth_state
-        if not current_auth.access_token:
+        if not current_auth.access_token and not current_auth.refresh_token:
             return
 
         def _validate() -> None:
             try:
-                # Validate once at startup; invalid tokens are downgraded
-                # to unauthenticated by AuthService.
-                self.auth_state = self.auth_service.validate_current_authentication()
+                # At startup, prefer auto-refresh when the token is near/over expiry.
+                # Falls back to validation for legacy records.
+                self.auth_state = self.auth_service.ensure_valid_authentication(
+                    force_refresh=bool(current_auth.refresh_token and not current_auth.access_token)
+                )
             except Exception:
                 # Keep startup resilient on transient network errors.
                 self.auth_state = current_auth
@@ -105,6 +107,10 @@ class AppController:
 
     def get_auth_state(self) -> AuthState:
         self.auth_state = self.auth_service.get_auth_state()
+        return self.auth_state
+
+    def get_auth_state_for_twitch_api(self, force_refresh: bool = False) -> AuthState:
+        self.auth_state = self.auth_service.ensure_valid_authentication(force_refresh=force_refresh)
         return self.auth_state
 
     def require_broadcaster_id(self) -> str:
@@ -158,14 +164,22 @@ class AppController:
 
     def start_monitoring(self, broadcaster_id: str | None = None) -> None:
         resolved_broadcaster_id = broadcaster_id or self.require_broadcaster_id()
-        self.monitor_service.start(self.get_auth_state(), resolved_broadcaster_id)
+        self.monitor_service.start(
+            auth_state_provider=self.get_auth_state_for_twitch_api,
+            broadcaster_id=resolved_broadcaster_id,
+            force_refresh_auth_state=lambda: self.get_auth_state_for_twitch_api(force_refresh=True),
+        )
 
     def stop_monitoring(self) -> None:
         self.monitor_service.stop()
 
     def refresh_clips(self, broadcaster_id: str | None = None) -> list[ClipItem]:
         resolved_broadcaster_id = broadcaster_id or self.require_broadcaster_id()
-        return self.monitor_service.run_once(self.get_auth_state(), resolved_broadcaster_id)
+        return self.monitor_service.run_once(
+            self.get_auth_state_for_twitch_api(),
+            resolved_broadcaster_id,
+            force_refresh_auth_state=lambda: self.get_auth_state_for_twitch_api(force_refresh=True),
+        )
 
     def get_player_url(self) -> str:
         return f"http://{self.player_server.host}:{self.player_server.port}{DEFAULT_PLAYER_PATH}"
@@ -191,7 +205,13 @@ class AppController:
             if not state.user_id:
                 return False
             try:
-                self.monitor_service.start(state, state.user_id)
+                self.monitor_service.start(
+                    auth_state_provider=self.get_auth_state_for_twitch_api,
+                    broadcaster_id=state.user_id,
+                    force_refresh_auth_state=lambda: self.get_auth_state_for_twitch_api(
+                        force_refresh=True
+                    ),
+                )
                 return True
             except Exception:
                 # Keep UI usable even if auto-start fails; user can start manually.

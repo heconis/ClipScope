@@ -5,8 +5,20 @@ from typing import Any
 
 from app.config.constants import DEFAULT_TWITCH_CLIENT_ID
 
+
 class TwitchApiError(RuntimeError):
     """Raised when a Twitch API request fails."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int | None = None,
+        response_text: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.response_text = response_text
 
 
 class TwitchApiClient:
@@ -37,5 +49,9 @@ class TwitchApiClient:
         with httpx.Client(timeout=self.timeout_seconds) as client:
             response = client.get(url, headers=headers, params=params)
         if response.status_code >= 400:
-            raise TwitchApiError(f"Twitch API request failed: {response.status_code} {response.text}")
+            raise TwitchApiError(
+                f"Twitch API request failed: {response.status_code} {response.text}",
+                status_code=response.status_code,
+                response_text=response.text,
+            )
         return response.json()
