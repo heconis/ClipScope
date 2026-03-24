@@ -13,7 +13,8 @@ class SettingsRepository:
             row = connection.execute(
                 """
                 SELECT polling_interval_seconds, local_server_port, max_clip_count,
-                       retention_days, always_on_top, play_sound_on_new_clip, theme_mode,
+                       retention_days, always_on_top, play_sound_on_new_clip,
+                       auto_update_check, theme_mode,
                        window_width, window_height
                 FROM settings
                 WHERE id = 1
@@ -28,6 +29,7 @@ class SettingsRepository:
             retention_days=row["retention_days"],
             always_on_top=bool(row["always_on_top"]),
             play_sound_on_new_clip=bool(row["play_sound_on_new_clip"]),
+            auto_update_check=bool(row["auto_update_check"]),
             theme_mode=row["theme_mode"] or "light",
             window_width=row["window_width"],
             window_height=row["window_height"],
@@ -39,10 +41,11 @@ class SettingsRepository:
                 """
                 INSERT INTO settings (
                     id, polling_interval_seconds, local_server_port, max_clip_count,
-                    retention_days, always_on_top, play_sound_on_new_clip, theme_mode,
+                    retention_days, always_on_top, play_sound_on_new_clip,
+                    auto_update_check, theme_mode,
                     window_width, window_height
                 )
-                VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     polling_interval_seconds = excluded.polling_interval_seconds,
                     local_server_port = excluded.local_server_port,
@@ -50,6 +53,7 @@ class SettingsRepository:
                     retention_days = excluded.retention_days,
                     always_on_top = excluded.always_on_top,
                     play_sound_on_new_clip = excluded.play_sound_on_new_clip,
+                    auto_update_check = excluded.auto_update_check,
                     theme_mode = excluded.theme_mode,
                     window_width = excluded.window_width,
                     window_height = excluded.window_height
@@ -61,6 +65,7 @@ class SettingsRepository:
                     settings.retention_days,
                     1 if settings.always_on_top else 0,
                     1 if settings.play_sound_on_new_clip else 0,
+                    1 if settings.auto_update_check else 0,
                     settings.theme_mode,
                     settings.window_width,
                     settings.window_height,

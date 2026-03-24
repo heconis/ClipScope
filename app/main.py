@@ -9,6 +9,7 @@ from app.application.app_controller import AppController
 from app.application.auth_service import AuthService
 from app.application.monitor_service import MonitorService
 from app.application.settings_service import SettingsService
+from app.application.update_service import UpdateService
 from app.clips.clip_repository_service import ClipRepositoryService
 from app.clips.selection_service import SelectionService
 from app.player.server import PlayerServer
@@ -67,6 +68,7 @@ def build_controller() -> AppController:
     api_client = TwitchApiClient()
     clips_service = TwitchClipsService(api_client)
     monitor_service = MonitorService(clips_service, clip_repository_service)
+    update_service = UpdateService()
     settings = settings_service.load()
     player_server = PlayerServer("127.0.0.1", settings.local_server_port, selection_service)
 
@@ -77,6 +79,7 @@ def build_controller() -> AppController:
         clip_repository_service=clip_repository_service,
         selection_service=selection_service,
         monitor_service=monitor_service,
+        update_service=update_service,
         player_server=player_server,
         database=database,
     )

@@ -36,6 +36,7 @@ class Database:
                     retention_days INTEGER NOT NULL,
                     always_on_top INTEGER NOT NULL DEFAULT 1,
                     play_sound_on_new_clip INTEGER NOT NULL DEFAULT 1,
+                    auto_update_check INTEGER NOT NULL DEFAULT 1,
                     theme_mode TEXT NOT NULL DEFAULT 'light',
                     window_width INTEGER NOT NULL,
                     window_height INTEGER NOT NULL
@@ -96,6 +97,10 @@ class Database:
             if "play_sound_on_new_clip" not in settings_columns:
                 connection.execute(
                     "ALTER TABLE settings ADD COLUMN play_sound_on_new_clip INTEGER NOT NULL DEFAULT 1"
+                )
+            if "auto_update_check" not in settings_columns:
+                connection.execute(
+                    "ALTER TABLE settings ADD COLUMN auto_update_check INTEGER NOT NULL DEFAULT 1"
                 )
             if "theme_mode" not in settings_columns:
                 connection.execute(

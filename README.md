@@ -70,12 +70,12 @@ PyInstaller を使って onefile 形式でビルドします。
 配布用 ZIP を作成する場合:
 
 ```powershell
-.\tools\release\package_windows.ps1 -Version 0.1.4
+.\tools\release\package_windows.ps1 -Version 0.1.5
 ```
 
 出力先:
 
-- `release/ClipScope-v0.1.4-windows-x64.zip`
+- `release/ClipScope-v0.1.5-windows-x64.zip`
 
 ## Twitch Developer 設定 (配布時の案内用)
 

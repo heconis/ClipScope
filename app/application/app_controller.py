@@ -4,6 +4,7 @@ import threading
 
 from app.application.monitor_service import MonitorService, MonitorStatus
 from app.application.settings_service import SettingsService
+from app.application.update_service import UpdateService
 from app.application.auth_service import AuthService, AuthSession
 from app.clips.clip_repository_service import ClipRepositoryService
 from app.clips.selection_service import SelectionService
@@ -11,6 +12,7 @@ from app.config.constants import DEFAULT_PLAYER_PATH
 from app.models.auth import AuthState
 from app.models.clip import ClipItem
 from app.models.settings import AppSettings
+from app.models.update import UpdateCheckResult
 from app.player.server import PlayerServer
 from app.storage.auth_repository import AuthRepository
 from app.storage.database import Database
@@ -25,6 +27,7 @@ class AppController:
         clip_repository_service: ClipRepositoryService,
         selection_service: SelectionService,
         monitor_service: MonitorService,
+        update_service: UpdateService,
         player_server: PlayerServer,
         database: Database,
     ) -> None:
@@ -34,6 +37,7 @@ class AppController:
         self.clip_repository_service = clip_repository_service
         self.selection_service = selection_service
         self.monitor_service = monitor_service
+        self.update_service = update_service
         self.player_server = player_server
         self.database = database
         self.settings = self.settings_service.load()
@@ -183,6 +187,11 @@ class AppController:
 
     def get_player_url(self) -> str:
         return f"http://{self.player_server.host}:{self.player_server.port}{DEFAULT_PLAYER_PATH}"
+
+    def check_for_updates(self) -> UpdateCheckResult:
+        from app.config.constants import APP_VERSION
+
+        return self.update_service.check_for_updates(APP_VERSION)
 
     def get_bootstrap_summary(self) -> dict[str, object]:
         return {

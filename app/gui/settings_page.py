@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from nicegui import app, ui
+from nicegui import app, run, ui
 
 from app.application.app_controller import AppController
+from app.config.constants import KOFI_SUPPORT_URL
+from app.gui.update_ui import open_external_url, show_update_available_dialog
 
 
 def render_settings_panel(
@@ -21,16 +23,6 @@ def render_settings_panel(
         with ui.column().classes("settings-scroll w-full flex-1 overflow-y-auto px-4 pt-0 pb-4 gap-3"):
             with ui.expansion("一般", value=True).classes("settings-section w-full border rounded"):
                 with ui.column().classes("w-full p-3 gap-2"):
-                    with ui.card().classes("settings-card w-full px-3 py-2"):
-                        with ui.row().classes("w-full items-center justify-between"):
-                            ui.label("常に最前面に表示").classes("text-sm font-medium leading-tight")
-                            always_on_top = ui.checkbox(value=settings.always_on_top).props("dense")
-
-                    with ui.card().classes("settings-card w-full px-3 py-2"):
-                        with ui.row().classes("w-full items-center justify-between"):
-                            ui.label("通知音を再生").classes("text-sm font-medium leading-tight")
-                            play_sound = ui.checkbox(value=settings.play_sound_on_new_clip).props("dense")
-
                     with ui.card().classes("settings-card w-full px-3 py-2"):
                         with ui.row().classes("w-full items-center justify-between"):
                             ui.label("テーマ").classes("text-sm font-medium leading-tight")
@@ -51,6 +43,45 @@ def render_settings_panel(
                                 apply_theme_mode()
 
                             theme_mode.on("update:model-value", lambda _=None: on_theme_preview())
+                    
+                    with ui.card().classes("settings-card w-full px-3 py-2"):
+                        with ui.row().classes("w-full items-center justify-between"):
+                            ui.label("常に最前面に表示").classes("text-sm font-medium leading-tight")
+                            always_on_top = ui.checkbox(value=settings.always_on_top).props("dense")
+
+                    with ui.card().classes("settings-card w-full px-3 py-2"):
+                        with ui.row().classes("w-full items-center justify-between"):
+                            ui.label("通知音を再生").classes("text-sm font-medium leading-tight")
+                            play_sound = ui.checkbox(value=settings.play_sound_on_new_clip).props("dense")
+
+                    with ui.card().classes("settings-card w-full px-3 py-2 gap-2"):
+                        async def manual_check_updates() -> None:
+                            try:
+                                result = await run.io_bound(controller.check_for_updates)
+                            except Exception as error:
+                                ui.notify(f"更新確認に失敗しました: {error}", color="warning")
+                                return
+
+                            if result.is_update_available:
+                                show_update_available_dialog(result)
+                            else:
+                                ui.notify("最新バージョンです。", color="positive")
+
+                        ui.label("アップデート").classes("text-sm font-medium leading-tight")
+                        with ui.row().classes("w-full items-center justify-between gap-2"):
+                            ui.label("自動更新確認").classes("text-[11px] text-gray-600 leading-tight")
+                            auto_update_check = ui.checkbox(value=settings.auto_update_check).props("dense")
+                        ui.button("手動で確認", on_click=manual_check_updates).props(
+                            'color=primary dense padding="8px 12px 6px"'
+                        ).classes('leading-none w-full')
+
+                    with ui.card().classes("settings-card w-full px-3 py-2 gap-2"):
+                        ui.label("サポート").classes("text-sm font-medium leading-tight")
+                        ui.label("Ko-fi の支援ページを開きます。").classes("text-[11px] text-gray-600 leading-tight")
+                        ui.button(
+                            "Ko-fiで支援",
+                            on_click=lambda: open_external_url(KOFI_SUPPORT_URL),
+                        ).style("background: #e86e67 !important; color: white !important;").classes("w-full")
 
             with ui.expansion("詳細", value=False).classes("settings-section w-full border rounded"):
                 with ui.column().classes("w-full p-3 gap-3"):
@@ -113,6 +144,7 @@ def render_settings_panel(
             defaults = controller.get_default_settings()
             settings.always_on_top = bool(always_on_top.value)
             settings.play_sound_on_new_clip = bool(play_sound.value)
+            settings.auto_update_check = bool(auto_update_check.value)
             settings.theme_mode = str(theme_mode.value or "light")
             if settings.theme_mode not in valid_themes:
                 settings.theme_mode = "light"
@@ -139,6 +171,7 @@ def render_settings_panel(
                         settings.retention_days = reset.retention_days
                         settings.always_on_top = reset.always_on_top
                         settings.play_sound_on_new_clip = reset.play_sound_on_new_clip
+                        settings.auto_update_check = reset.auto_update_check
                         settings.theme_mode = str(reset.theme_mode or "light")
                         if settings.theme_mode not in valid_themes:
                             settings.theme_mode = "light"
@@ -148,6 +181,7 @@ def render_settings_panel(
                         retention.value = reset.retention_days
                         always_on_top.value = reset.always_on_top
                         play_sound.value = reset.play_sound_on_new_clip
+                        auto_update_check.value = reset.auto_update_check
                         theme_mode.value = settings.theme_mode
                         apply_window_flags()
                         apply_theme_mode()

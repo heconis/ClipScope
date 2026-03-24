@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import sys
 
-from nicegui import app, ui
+from nicegui import app, run, ui
 from starlette.responses import PlainTextResponse
 
 from app.application.app_controller import AppController
 from app.gui.main_page import render_main_panel
 from app.gui.settings_page import render_settings_panel
 from app.gui.setup_page import render_setup_panel
+from app.gui.update_ui import show_update_available_dialog
 
 
 def _close_pyinstaller_splash() -> None:
@@ -121,6 +122,7 @@ def register_ui(controller: AppController) -> None:
         auth_state = controller.get_auth_state()
         auto_window_flag_bootstrap = {"done": False}
         splash_state = {"closed": False}
+        startup_update_state = {"started": False}
 
         with ui.column().classes("w-screen h-screen gap-0"):
             with ui.row().classes("w-full items-center justify-between pl-4 pr-1 py-0 bg-[#468ace] text-white shrink-0"):
@@ -169,4 +171,21 @@ def register_ui(controller: AppController) -> None:
                 _close_pyinstaller_splash()
                 splash_state["closed"] = True
 
+        async def check_updates_on_startup() -> None:
+            if startup_update_state["started"]:
+                return
+            startup_update_state["started"] = True
+
+            try:
+                current_settings = controller.get_settings()
+                if not current_settings.auto_update_check:
+                    return
+                result = await run.io_bound(controller.check_for_updates)
+            except Exception:
+                return
+
+            if result.is_update_available:
+                show_update_available_dialog(result)
+
         ui.timer(0.2, ensure_window_flags_on_ui_ready)
+        ui.timer(1.0, check_updates_on_startup, once=True)
