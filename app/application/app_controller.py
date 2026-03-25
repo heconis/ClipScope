@@ -76,6 +76,11 @@ class AppController:
 
     def shutdown(self) -> None:
         self.monitor_service.stop()
+        try:
+            self.clear_selection()
+        except Exception:
+            # Keep shutdown resilient even if playback state cleanup fails.
+            pass
         self.player_server.stop()
 
     def get_settings(self) -> AppSettings:

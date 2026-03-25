@@ -1,6 +1,6 @@
 [project]
 name = "clipscope"
-version = "0.1.5"
+version = "0.1.6"
 description = "Twitch clip monitoring and OBS playback helper."
 readme = "README.md"
 requires-python = ">=3.10"
