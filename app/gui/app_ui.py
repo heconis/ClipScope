@@ -120,7 +120,6 @@ def register_ui(controller: AppController) -> None:
         )
 
         auth_state = controller.get_auth_state()
-        auto_window_flag_bootstrap = {"done": False}
         splash_state = {"closed": False}
         startup_update_state = {"started": False}
 
@@ -156,17 +155,9 @@ def register_ui(controller: AppController) -> None:
                     with ui.tab_panel(settings_tab).classes("h-full"):
                         render_settings_panel(controller, on_theme_change=apply_theme_mode)
 
-        def ensure_window_flags_on_ui_ready() -> None:
+        def ensure_window_ready_state() -> None:
             if not app.native.main_window:
                 return
-            if not auto_window_flag_bootstrap["done"]:
-                try:
-                    app.native.main_window.set_always_on_top(
-                        bool(controller.get_settings().always_on_top)
-                    )
-                except Exception:
-                    pass
-                auto_window_flag_bootstrap["done"] = True
             if not splash_state["closed"]:
                 _close_pyinstaller_splash()
                 splash_state["closed"] = True
@@ -187,5 +178,5 @@ def register_ui(controller: AppController) -> None:
             if result.is_update_available:
                 show_update_available_dialog(result)
 
-        ui.timer(0.2, ensure_window_flags_on_ui_ready)
+        ui.timer(0.2, ensure_window_ready_state)
         ui.timer(1.0, check_updates_on_startup, once=True)
