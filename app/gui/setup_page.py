@@ -14,6 +14,7 @@ def render_setup_panel(
     open_main_tab: Callable[[], None] | None = None,
 ) -> None:
     auto_check_state = {"in_progress": False, "last_error": None}
+    obs_url_state = {"value": controller.get_player_url()}
 
     def start_monitoring_after_auth() -> None:
         status = controller.get_monitor_status()
@@ -44,7 +45,6 @@ def render_setup_panel(
     def auth_panel() -> None:
         auth_state = controller.get_auth_state()
         session = controller.get_pending_auth_session()
-        player_url = controller.get_player_url()
 
         with ui.column().classes("w-full px-4 pt-0 pb-4 gap-4"):
             ui.label(
@@ -103,17 +103,27 @@ def render_setup_panel(
                 ui.label("OBS連携").classes("text-lg font-medium")
                 ui.label("ブラウザソースにURLを設定してください。").classes("text-sm text-gray-700")
                 with ui.row().classes("w-full items-center gap-2"):
-                    url_input = ui.input(value=player_url).props("readonly dense").classes("flex-1")
+                    url_input = (
+                        ui.input(value=obs_url_state["value"])
+                        .props("readonly dense")
+                        .classes("flex-1")
+                    )
                     ui.button(
                         icon="content_copy",
-                        on_click=lambda text=player_url: (
-                            ui.clipboard.write(text),
+                        on_click=lambda: (
+                            ui.clipboard.write(url_input.value or controller.get_player_url()),
                             ui.notify("URLをコピーしました。", color="primary"),
                         ),
                     ).props("flat round dense")
                 url_input.classes("text-sm")
 
     auth_panel()
+
+    def sync_player_url() -> None:
+        current_url = controller.get_player_url()
+        if obs_url_state["value"] != current_url:
+            obs_url_state["value"] = current_url
+            auth_panel.refresh()
 
     def auto_check_auth() -> None:
         if auto_check_state["in_progress"]:
@@ -143,3 +153,4 @@ def render_setup_panel(
             auto_check_state["in_progress"] = False
 
     ui.timer(3.0, auto_check_auth)
+    ui.timer(1.0, sync_player_url)

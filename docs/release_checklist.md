@@ -13,8 +13,8 @@
 - [ ] `.venv` を有効化
 - [ ] `.\tools\release\build_windows.ps1` を実行
 - [ ] `dist/ClipScope.exe` が生成される
-- [ ] `.\tools\release\package_windows.ps1 -Version 0.1.7` を実行
-- [ ] `release/ClipScope-v0.1.7-windows-x64.zip` が生成される
+- [ ] `.\tools\release\package_windows.ps1 -Version 0.1.8` を実行
+- [ ] `release/ClipScope-v0.1.8-windows-x64.zip` が生成される
 
 ## 3. 配布物確認
 
@@ -27,5 +27,6 @@
 
 - [ ] `README.md`
 - [ ] `LICENSE`
+- [ ] `THIRD_PARTY_LICENSES.md`
 - [ ] `RELEASE_NOTES.md`
 - [ ] Twitch Developer 設定手順（必要なら別紙）

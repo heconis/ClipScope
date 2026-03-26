@@ -70,12 +70,22 @@ PyInstaller を使って onefile 形式でビルドします。
 配布用 ZIP を作成する場合:
 
 ```powershell
-.\tools\release\package_windows.ps1 -Version 0.1.7
+.\tools\release\package_windows.ps1 -Version 0.1.8
 ```
 
 出力先:
 
-- `release/ClipScope-v0.1.7-windows-x64.zip`
+- `release/ClipScope-v0.1.8-windows-x64.zip`
+
+サードパーティライセンス一覧を単独生成する場合:
+
+```powershell
+.\.venv\Scripts\python.exe .\tools\release\generate_third_party_licenses.py
+```
+
+生成物:
+
+- `THIRD_PARTY_LICENSES.md`
 
 ## Twitch Developer 設定 (配布時の案内用)
 

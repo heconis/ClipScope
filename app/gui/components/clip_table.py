@@ -69,7 +69,7 @@ def render_clip_table(
                     ).tooltip(title_text)
 
                 with ui.row().classes("w-full justify-end -mt-10"):
-                    ui.label(f"{clip.duration_seconds}秒").classes("text-xs text-gray-500")
+                    ui.label(f"{round(clip.duration_seconds)}秒").classes("text-xs text-gray-500")
 
                 with ui.row().classes("w-full justify-end -mt-5"):
                     ui.label(_to_jst_text(clip.created_at)).classes("text-xs text-gray-500")

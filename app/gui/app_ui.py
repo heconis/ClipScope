@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 from nicegui import app, run, ui
 from starlette.responses import PlainTextResponse
 
 from app.application.app_controller import AppController
+from app.config.constants import APP_NAME, APP_VERSION
 from app.gui.main_page import render_main_panel
 from app.gui.settings_page import render_settings_panel
 from app.gui.setup_page import render_setup_panel
@@ -26,7 +28,25 @@ def _close_pyinstaller_splash() -> None:
         return
 
 
+def _resolve_assets_root() -> Path:
+    if getattr(sys, "frozen", False):
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            candidate = Path(meipass) / "assets"
+            if candidate.is_dir():
+                return candidate
+    return Path(__file__).resolve().parents[2] / "assets"
+
+
 def register_ui(controller: AppController) -> None:
+    assets_root = _resolve_assets_root()
+    if assets_root.is_dir():
+        try:
+            app.add_static_files("/app-assets", assets_root)
+        except RuntimeError:
+            # Route may already exist during repeated setup in dev/reload scenarios.
+            pass
+
     @app.exception_handler(404)
     async def _handle_not_found(_request, _exc) -> PlainTextResponse:
         # In frozen (PyInstaller) mode, NiceGUI's default 404 handler may try to
@@ -36,6 +56,7 @@ def register_ui(controller: AppController) -> None:
     @ui.page("/")
     def _index_page() -> None:
         settings = controller.get_settings()
+        header_title = f"{APP_NAME} v{APP_VERSION}"
         ui.colors(primary="#2563eb", secondary="#0f172a", accent="#f59e0b")
         dark_mode = ui.dark_mode(value=(settings.theme_mode == "dark"))
         ui.add_css(
@@ -125,7 +146,7 @@ def register_ui(controller: AppController) -> None:
 
         with ui.column().classes("w-screen h-screen gap-0"):
             with ui.row().classes("w-full items-center justify-between pl-4 pr-1 py-0 bg-[#468ace] text-white shrink-0"):
-                ui.label("ClipScope").classes("text-xl font-bold")
+                ui.label(header_title).classes("text-xl font-bold")
                 ui.button(icon="close", on_click=app.shutdown).props(
                     "flat round dense color=white size=lg"
                 ).classes("mr-0")

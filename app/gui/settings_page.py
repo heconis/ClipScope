@@ -5,7 +5,15 @@ from collections.abc import Callable
 from nicegui import app, run, ui
 
 from app.application.app_controller import AppController
-from app.config.constants import KOFI_SUPPORT_URL
+from app.config.constants import (
+    AUTHOR_BOOTH_URL,
+    AUTHOR_NAME,
+    AUTHOR_TWITCH_URL,
+    AUTHOR_WEBSITE_URL,
+    AUTHOR_X_URL,
+    AUTHOR_YOUTUBE_URL,
+    KOFI_SUPPORT_URL,
+)
 from app.gui.update_ui import open_external_url, show_update_available_dialog
 
 
@@ -19,8 +27,29 @@ def render_settings_panel(
     if settings.theme_mode not in valid_themes:
         settings.theme_mode = "light"
 
+    author_links = [
+        ("ホームページ", AUTHOR_WEBSITE_URL, "/app-assets/icons/website.png"),
+        ("X", AUTHOR_X_URL, "/app-assets/icons/x.png"),
+        ("Twitch", AUTHOR_TWITCH_URL, "/app-assets/icons/twitch.png"),
+        ("YouTube", AUTHOR_YOUTUBE_URL, "/app-assets/icons/youtube.png"),
+        ("BOOTH", AUTHOR_BOOTH_URL, "/app-assets/icons/booth.png"),
+    ]
+
     with ui.column().classes("settings-root w-full h-full gap-0"):
         with ui.column().classes("settings-scroll w-full flex-1 overflow-y-auto px-4 pt-0 pb-4 gap-3"):
+            with ui.card().classes("settings-section w-full px-3 py-3 gap-2 border"):
+                with ui.row().classes("w-full gap-2 mt-2"):
+                    ui.label("作者:").classes("text-sm font-medium leading-tight")
+                    ui.label(AUTHOR_NAME).classes("text-sm font-semibold leading-tight")
+                    for label, url, image_path in author_links:
+                        with ui.button(
+                            on_click=lambda _, target=url: open_external_url(target)
+                        ).props("flat round dense").classes("shrink-0 -mt-2").style(
+                            "padding: 0px; min-width: 0;"
+                        ):
+                            ui.image(image_path).classes("size-5 rounded")
+                            ui.tooltip(label)
+
             with ui.expansion("一般", value=True).classes("settings-section w-full border rounded"):
                 with ui.column().classes("w-full p-3 gap-2"):
                     with ui.card().classes("settings-card w-full px-3 py-2"):
