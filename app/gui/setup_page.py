@@ -56,7 +56,6 @@ def render_setup_panel(
                     with ui.row().classes("w-full items-center justify-between"):
                         ui.label("認証を確認").classes("text-lg font-medium")
                         ui.label("認証済").classes("text-sm font-medium text-green-700")
-                    ui.label("現在のトークン状態を確認します。").classes("text-sm text-gray-700")
 
                     def validate_auth() -> None:
                         checked = controller.validate_authentication()
@@ -84,13 +83,13 @@ def render_setup_panel(
                         except TwitchAuthError as error:
                             ui.notify(str(error), color="negative")
 
-                    label = "Twitch認証を再開始" if session is not None else "Twitch認証を開始"
+                    label = "認証を再開始" if session is not None else "認証を開始"
                     ui.button(label, on_click=start_auth).props("color=primary")
 
             with ui.card().classes("w-full"):
                 ui.label("デバイス認証（ブラウザ）").classes("text-lg font-medium")
                 if session is None:
-                    ui.label("「Twitch認証を開始」を押してください。").classes("text-sm text-gray-600")
+                    ui.label("「認証を開始」を押してください。").classes("text-sm text-gray-600")
                 else:
                     ui.link(session.verification_uri, session.verification_uri, new_tab=True).classes(
                         "text-sm"
@@ -101,7 +100,7 @@ def render_setup_panel(
 
             with ui.card().classes("w-full"):
                 ui.label("OBS連携").classes("text-lg font-medium")
-                ui.label("ブラウザソースにURLを設定してください。").classes("text-sm text-gray-700")
+                ui.label("ブラウザにURLを設定してください。").classes("text-sm text-gray-700")
                 with ui.row().classes("w-full items-center gap-2"):
                     url_input = (
                         ui.input(value=obs_url_state["value"])

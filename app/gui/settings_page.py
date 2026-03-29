@@ -37,7 +37,7 @@ def render_settings_panel(
 
     with ui.column().classes("settings-root w-full h-full gap-0"):
         with ui.column().classes("settings-scroll w-full flex-1 overflow-y-auto px-4 pt-0 pb-4 gap-3"):
-            with ui.card().classes("settings-section w-full px-3 py-3 gap-2 border"):
+            with ui.card().classes("settings-section w-full py-3 gap-2 border"):
                 with ui.row().classes("w-full gap-2 mt-2"):
                     ui.label("作者:").classes("text-sm font-medium leading-tight")
                     ui.label(AUTHOR_NAME).classes("text-sm font-semibold leading-tight")
@@ -51,17 +51,34 @@ def render_settings_panel(
                             ui.tooltip(label)
 
             with ui.expansion("一般", value=True).classes("settings-section w-full border rounded"):
-                with ui.column().classes("w-full p-3 gap-2"):
+                with ui.column().classes("w-full px-3 gap-2"):
                     with ui.card().classes("settings-card w-full px-3 py-2"):
                         with ui.row().classes("w-full items-center justify-between"):
                             ui.label("テーマ").classes("text-sm font-medium leading-tight")
+                            ui.add_head_html('''
+                                <style>
+                                .extra-compact, .extra-compact .q-field__control, .extra-compact .q-field__append, .extra-compact .q-field__control--addon {
+                                    height: 30px !important;
+                                    max-height: 30px !important;
+                                    min-height: 30px !important;
+                                    align-items: center;
+                                }
+                                .q-field__control-container {
+                                    display: flex;
+                                    align-items: center;
+                                }
+                                .extra-compact .q-field__label {
+                                    top: 6px !important;
+                                }
+                                </style>
+                            ''', shared=True)
                             theme_mode = (
                                 ui.select(
                                     options={"light": "ライト", "dark": "ダーク"},
                                     value=settings.theme_mode,
                                 )
                                 .props("dense outlined")
-                                .classes("w-28")
+                                .classes("w-28 extra-compact")
                             )
 
                             def on_theme_preview() -> None:
@@ -113,7 +130,7 @@ def render_settings_panel(
                         ).style("background: #e86e67 !important; color: white !important;").classes("w-full")
 
             with ui.expansion("詳細", value=False).classes("settings-section w-full border rounded"):
-                with ui.column().classes("w-full p-3 gap-3"):
+                with ui.column().classes("w-full px-3 gap-3"):
                     def render_number_row(
                         label: str,
                         hint: str,

@@ -2,7 +2,7 @@
 
 ClipScope 配布物に含まれる、またはビルド時に使用する主要な Python 依存関係のライセンス一覧です。
 
-- Generated at: 2026-03-26 20:25:16 +0900
+- Generated at: 2026-03-29 19:28:21 +0900
 - Python: 3.10.11
 - Packages: 63
 

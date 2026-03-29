@@ -158,6 +158,13 @@ class AppController:
     def select_clip(self, clip_id: str) -> None:
         self.selection_service.select_clip(clip_id)
 
+    def toggle_clip_selection(self, clip_id: str) -> bool:
+        if self.get_selected_clip_id() == clip_id:
+            self.clear_selection()
+            return False
+        self.select_clip(clip_id)
+        return True
+
     def clear_selection(self) -> None:
         self.selection_service.clear_selection()
 

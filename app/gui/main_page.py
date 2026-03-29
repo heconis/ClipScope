@@ -67,14 +67,12 @@ def render_main_panel(controller: AppController) -> None:
         ui.notify(message, color="negative")
 
     def apply_selected_card_style(clip_id: str | None) -> None:
-        if not clip_id:
-            return
         ui.run_javascript(
             f"""
             document.querySelectorAll('.clip-card').forEach((el) => {{
               el.classList.remove('clip-card-selected', 'bg-blue-50', 'border-blue-300');
             }});
-            const target = document.getElementById('clip-card-{clip_id}');
+            const target = {f"document.getElementById('clip-card-{clip_id}')" if clip_id else "null"};
             if (target) {{
               target.classList.add('clip-card-selected', 'bg-blue-50', 'border-blue-300');
             }}
@@ -86,12 +84,16 @@ def render_main_panel(controller: AppController) -> None:
 
     def select_clip(clip_id: str) -> None:
         try:
-            controller.select_clip(clip_id)
-            view_state["selected_clip_id"] = clip_id
-            view_state["selected_clip_id_rendered"] = clip_id
-            apply_selected_card_style(clip_id)
-            selected = controller.get_selected_clip()
-            ui.notify(f"選択中: {selected.title if selected else clip_id}")
+            selected_now = controller.toggle_clip_selection(clip_id)
+            current_selected_clip_id = controller.get_selected_clip_id()
+            view_state["selected_clip_id"] = current_selected_clip_id
+            view_state["selected_clip_id_rendered"] = current_selected_clip_id
+            apply_selected_card_style(current_selected_clip_id)
+            if selected_now:
+                selected = controller.get_selected_clip()
+                ui.notify(f"選択中: {selected.title if selected else clip_id}")
+            else:
+                ui.notify("再生を停止しました。", color="primary")
         except Exception as error:
             ui.notify(str(error), color="negative")
 
@@ -175,11 +177,17 @@ def render_main_panel(controller: AppController) -> None:
         clips_changed = (
             view_state["clips_render_signature"] != clips_signature
         )
+        selection_changed = (
+            view_state["selected_clip_id_rendered"] != view_state["selected_clip_id"]
+        )
         monitor_changed = view_state["monitor_running_rendered"] != view_state["monitor_running"]
 
         if clips_changed:
             clip_list_content.refresh()
             view_state["clips_render_signature"] = clips_signature
+            view_state["selected_clip_id_rendered"] = view_state["selected_clip_id"]
+        elif selection_changed:
+            apply_selected_card_style(view_state["selected_clip_id"])
             view_state["selected_clip_id_rendered"] = view_state["selected_clip_id"]
 
         if monitor_changed:

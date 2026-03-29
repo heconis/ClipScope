@@ -96,6 +96,22 @@ class PlayerServer:
                 self.send_response(404)
                 self.end_headers()
 
+            def do_POST(self) -> None:
+                parsed = urlparse(self.path)
+                if parsed.path == "/api/clear-selection":
+                    selection_service.clear_selection()
+                    payload = json.dumps({"ok": True}).encode("utf-8")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Cache-Control", "no-store")
+                    self.send_header("Content-Length", str(len(payload)))
+                    self.end_headers()
+                    self.wfile.write(payload)
+                    return
+
+                self.send_response(404)
+                self.end_headers()
+
             def log_message(self, format: str, *args) -> None:
                 return
 
