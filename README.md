@@ -70,12 +70,12 @@ PyInstaller を使って onefile 形式でビルドします。
 配布用 ZIP を作成する場合:
 
 ```powershell
-.\tools\release\package_windows.ps1 -Version 0.1.9
+.\tools\release\package_windows.ps1 -Version 1.0.0
 ```
 
 出力先:
 
-- `release/ClipScope-v0.1.9-windows-x64.zip`
+- `release/ClipScope-v1.0.0-windows-x64.zip`
 
 サードパーティライセンス一覧を単独生成する場合:
 
